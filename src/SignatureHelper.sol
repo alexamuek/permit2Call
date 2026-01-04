@@ -9,7 +9,7 @@ contract SignatureHelper {
         "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
     );
 
-    function getDomainSeparator(address permit2) internal view returns (bytes32 domainSeparator) {
+    function getDomainSeparator(address permit2) public view returns (bytes32 domainSeparator) {
         domainSeparator = IEIP712(permit2).DOMAIN_SEPARATOR();
     }
 
@@ -17,7 +17,7 @@ contract SignatureHelper {
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         address permit2
-    ) internal view returns (bytes32 msgHash) {
+    ) public view returns (bytes32 msgHash) {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator(permit2);
         bytes32 tokenPermissions = keccak256(abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted));
         msgHash = keccak256(

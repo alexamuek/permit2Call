@@ -23,7 +23,7 @@ contract InteractScript is Script, SignatureHelper {
         address predictionCreator = 0xf315B9006C20913D6D8498BDf657E778d4Ddf2c4; 
         uint256  fromPrivateKey = vm.envUint("DEV_PRIVATE_KEY");
         bool agreeVote = true;
-        uint256 permitNonce = 11; //change nonce
+        uint256 permitNonce = 12; //change nonce
         uint256 expiration = uint256(block.timestamp + 365 days);
 
         /*
