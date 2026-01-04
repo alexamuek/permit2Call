@@ -23,7 +23,7 @@ contract InteractScript is Script, SignatureHelper {
         address predictionCreator = 0xf315B9006C20913D6D8498BDf657E778d4Ddf2c4; 
         uint256  fromPrivateKey = vm.envUint("DEV_PRIVATE_KEY");
         bool agreeVote = true;
-        uint256 permitNonce = 8; //change nonce
+        uint256 permitNonce = 11; //change nonce
         uint256 expiration = uint256(block.timestamp + 365 days);
 
         /*
@@ -46,6 +46,9 @@ contract InteractScript is Script, SignatureHelper {
 
 
         vm.startBroadcast();
+        // don't forget make alloawance for permit2
+        //token.approve(predicter.PERMIT2(), type(uint256).max);
+
         ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({
                 token: address(token),
@@ -60,7 +63,10 @@ contract InteractScript is Script, SignatureHelper {
             requestedAmount: strikeAmount   
         });
 
-        bytes memory signature = getPermitTransferSignature(permit, fromPrivateKey, address(predicter), predicter.PERMIT2());
+        bytes32 digest = getPermitDigest(permit, address(predicter), predicter.PERMIT2());
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(fromPrivateKey, digest);
+        bytes memory signature =  bytes.concat(r, s, bytes1(v));
         
         predicter.voteWithPermit2(
             predictionCreator,
