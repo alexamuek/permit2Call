@@ -4,42 +4,13 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import "../lib/forge-std/src/StdJson.sol";
 import "../src/Predicter.sol";
+import "../src/SignatureHelper.sol";
 import "../src/MockOracle.sol";
 import "../src/MockERC20.sol";
 
 /// Deploy and init actions
-contract InteractScript is Script {
+contract InteractScript is Script, SignatureHelper {
     using stdJson for string;
-
-    bytes32 public constant _TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
-    bytes32 public constant _PERMIT_TRANSFER_FROM_TYPEHASH = keccak256(
-        "PermitTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline)TokenPermissions(address token,uint256 amount)"
-    );
-
-    function getPermitTransferSignature(
-        ISignatureTransfer.PermitTransferFrom memory permit,
-        uint256 privateKey,
-        bytes32 domainSeparator,
-        address _predicter
-    ) internal view returns (bytes memory sig) {
-        bytes32 tokenPermissions = keccak256(abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted));
-        bytes32 msgHash = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                domainSeparator,
-                keccak256(
-                    abi.encode(
-                        _PERMIT_TRANSFER_FROM_TYPEHASH, tokenPermissions, _predicter, permit.nonce, permit.deadline
-                    )
-                )
-            )
-        );
-        console2.log('msgHash');
-        console2.logBytes32(msgHash);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, msgHash);
-        return bytes.concat(r, s, bytes1(v));
-    }
 
     function run() public {
         console2.log("Chain id: %s", vm.toString(block.chainid));
@@ -52,7 +23,7 @@ contract InteractScript is Script {
         address predictionCreator = 0xf315B9006C20913D6D8498BDf657E778d4Ddf2c4; 
         uint256  fromPrivateKey = vm.envUint("DEV_PRIVATE_KEY");
         bool agreeVote = true;
-        uint256 permitNonce = 5; //change nonce
+        uint256 permitNonce = 8; //change nonce
         uint256 expiration = uint256(block.timestamp + 365 days);
 
         /*
@@ -89,10 +60,7 @@ contract InteractScript is Script {
             requestedAmount: strikeAmount   
         });
 
-        bytes32 DOMAIN_SEPARATOR = 0x8a6e6e19bdfb3db3409910416b47c2f8fc28b49488d6555c7fceaa4479135bc3;
-        console2.log('DOMAIN_SEPARATOR');
-        console2.logBytes32(DOMAIN_SEPARATOR);
-        bytes memory signature = getPermitTransferSignature(permit, fromPrivateKey, DOMAIN_SEPARATOR, address(predicter));
+        bytes memory signature = getPermitTransferSignature(permit, fromPrivateKey, address(predicter), predicter.PERMIT2());
         
         predicter.voteWithPermit2(
             predictionCreator,
